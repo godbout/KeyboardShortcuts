@@ -28,8 +28,7 @@ extension KeyboardShortcuts {
 	public final class RecorderCocoa: NSSearchField, NSSearchFieldDelegate {
 		private let minimumWidth = 130.0
 		private let onChange: ((_ shortcut: Shortcut?) -> Void)?
-		private var canBecomeKey = false
-		private var eventMonitor: LocalEventMonitor?
+        private var eventMonitor: LocalEventMonitor?
 		private var shortcutsNameChangeObserver: NSObjectProtocol?
 		private var windowDidResignKeyObserver: NSObjectProtocol?
 		private var windowDidBecomeKeyObserver: NSObjectProtocol?
@@ -58,7 +57,7 @@ extension KeyboardShortcuts {
 		}
 
 		/// :nodoc:
-		override public var canBecomeKeyView: Bool { canBecomeKey }
+		override public var canBecomeKeyView: Bool { false }
 
 		/// :nodoc:
 		override public var intrinsicContentSize: CGSize {
@@ -139,15 +138,6 @@ extension KeyboardShortcuts {
 			KeyboardShortcuts.isPaused = false
 		}
 
-		private func preventBecomingKey() {
-			canBecomeKey = false
-
-			// Prevent the control from receiving the initial focus.
-			DispatchQueue.main.async { [self] in
-				canBecomeKey = true
-			}
-		}
-
 		/// :nodoc:
 		public func controlTextDidChange(_ object: Notification) {
 			if stringValue.isEmpty {
@@ -189,14 +179,7 @@ extension KeyboardShortcuts {
 				self.endRecording()
 				window.makeFirstResponder(nil)
 			}
-
-			// Ensures the recorder does not receive initial focus when a hidden window becomes unhidden.
-			windowDidBecomeKeyObserver = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: nil) { [weak self] _ in
-				self?.preventBecomingKey()
-			}
-
-			preventBecomingKey()
-		}
+        }
 
 		/// :nodoc:
 		override public func becomeFirstResponder() -> Bool {
