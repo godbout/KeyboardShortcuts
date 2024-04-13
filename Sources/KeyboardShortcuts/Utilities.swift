@@ -1,3 +1,4 @@
+#if os(macOS)
 import Carbon.HIToolbox
 import SwiftUI
 
@@ -428,27 +429,6 @@ final class ObjectAssociation<T> {
 }
 
 
-extension DispatchQueue {
-	/**
-	Label of the current dispatch queue.
-
-	- Important: Only meant for debugging purposes.
-
-	```
-	DispatchQueue.currentQueueLabel
-	//=> "com.apple.main-thread"
-	```
-	*/
-	static var currentQueueLabel: String { String(cString: __dispatch_queue_get_label(nil)) }
-
-	/**
-	Whether the current queue is a `NSBackgroundActivityScheduler` task.
-	*/
-	static var isCurrentQueueNSBackgroundActivitySchedulerQueue: Bool { currentQueueLabel.hasPrefix("com.apple.xpc.activity.") }
-}
-
-
-@available(macOS 10.15, *)
 extension HorizontalAlignment {
 	private enum ControlAlignment: AlignmentID {
 		static func defaultValue(in context: ViewDimensions) -> CGFloat { // swiftlint:disable:this no_cgfloat
@@ -459,7 +439,6 @@ extension HorizontalAlignment {
 	fileprivate static let controlAlignment = Self(ControlAlignment.self)
 }
 
-@available(macOS 10.15, *)
 extension View {
 	func formLabel(@ViewBuilder _ label: () -> some View) -> some View {
 		HStack(alignment: .firstTextBaseline) {
@@ -470,3 +449,4 @@ extension View {
 			.alignmentGuide(.leading) { $0[.controlAlignment] }
 	}
 }
+#endif
