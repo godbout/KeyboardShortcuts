@@ -22,9 +22,9 @@ private struct DynamicShortcutRecorder: View {
 			Text("Pressed? \(isPressed ? "👍" : "👎")")
 				.frame(width: 100, alignment: .leading)
 		}
-			.onChange(of: name) { _ in
-				isFocused = true
-			}
+		.onChange(of: name) {
+			isFocused = true
+		}
 	}
 }
 
@@ -57,13 +57,18 @@ private struct DynamicShortcut: View {
 				Divider()
 				DynamicShortcutRecorder(name: $shortcut.name, isPressed: $isPressed)
 			}
-		}
-			.frame(maxWidth: 300)
-			.padding()
-			.padding(.bottom, 20)
-			.onChange(of: shortcut) { [oldValue = shortcut] in
-				onShortcutChange(oldValue: oldValue, newValue: $0)
+			Divider()
+				.padding(.vertical)
+			Button("Reset All") {
+				KeyboardShortcuts.resetAll()
 			}
+		}
+		.frame(maxWidth: 300)
+		.padding()
+		.padding(.bottom, 20)
+		.onChange(of: shortcut) { oldValue, newValue in
+			onShortcutChange(oldValue: oldValue, newValue: newValue)
+		}
 	}
 
 	private func onShortcutChange(oldValue: Shortcut, newValue: Shortcut) {
@@ -93,30 +98,27 @@ private struct DoubleShortcut: View {
 			KeyboardShortcuts.Recorder(for: .testShortcut2) {
 				Text("Shortcut 2:") // Intentionally using the verbose initializer for testing.
 			}
-				.overlay(alignment: .trailing) {
-					Text("Pressed? \(isPressed2 ? "👍" : "👎")")
-						.offset(x: 90)
-				}
+			.overlay(alignment: .trailing) {
+				Text("Pressed? \(isPressed2 ? "👍" : "👎")")
+					.offset(x: 90)
+			}
 			Spacer()
-			Button("Reset All") {
-				KeyboardShortcuts.reset(.testShortcut1, .testShortcut2)
+		}
+		.offset(x: -40)
+		.frame(maxWidth: 300)
+		.padding()
+		.padding()
+		.onGlobalKeyboardShortcut(.testShortcut1) {
+			isPressed1 = $0 == .keyDown
+		}
+		.onGlobalKeyboardShortcut(.testShortcut2, type: .keyDown) {
+			isPressed2 = true
+		}
+		.task {
+			KeyboardShortcuts.onKeyUp(for: .testShortcut2) {
+				isPressed2 = false
 			}
 		}
-			.offset(x: -40)
-			.frame(maxWidth: 300)
-			.padding()
-			.padding()
-			.onKeyboardShortcut(.testShortcut1) {
-				isPressed1 = $0 == .keyDown
-			}
-			.onKeyboardShortcut(.testShortcut2, type: .keyDown) {
-				isPressed2 = true
-			}
-			.task {
-				KeyboardShortcuts.onKeyUp(for: .testShortcut2) {
-					isPressed2 = false
-				}
-			}
 	}
 }
 
@@ -127,7 +129,7 @@ struct MainScreen: View {
 			Divider()
 			DynamicShortcut()
 		}
-			.frame(width: 400, height: 320)
+		.frame(width: 400, height: 320)
 	}
 }
 

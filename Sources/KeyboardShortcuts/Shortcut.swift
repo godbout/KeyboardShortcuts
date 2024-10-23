@@ -1,6 +1,7 @@
 #if os(macOS)
 import AppKit
 import Carbon.HIToolbox
+import SwiftUI
 
 extension KeyboardShortcuts {
 	/**
@@ -87,12 +88,36 @@ extension KeyboardShortcuts {
 	}
 }
 
+enum Constants {
+	static let isSandboxed = ProcessInfo.processInfo.environment.hasKey("APP_SANDBOX_CONTAINER_ID")
+}
+
 extension KeyboardShortcuts.Shortcut {
 	/**
 	System-defined keyboard shortcuts.
 	*/
 	static var system: [Self] {
 		CarbonKeyboardShortcuts.system
+	}
+
+	/**
+	Check whether the keyboard shortcut is disallowed.
+	*/
+	var isDisallowed: Bool {
+		guard
+			#available(macOS 15, *),
+			Constants.isSandboxed
+		else {
+			return false
+		}
+
+		if !modifiers.contains(.option) {
+			return false // Allowed if Option is not involved
+		}
+
+		// If Option is present, ensure there's at least one modifier other than Option and Shift
+		let otherModifiers: NSEvent.ModifierFlags = [.command, .control, .function, .capsLock]
+		return modifiers.isDisjoint(with: otherModifiers)
 	}
 
 	/**
@@ -324,7 +349,22 @@ extension KeyboardShortcuts.Shortcut: CustomStringConvertible {
 	@MainActor
 	public var description: String {
 		// We use `.capitalized` so it correctly handles “⌘Space”.
-		modifiers.description + (keyToCharacter()?.capitalized ?? "�")
+		modifiers.presentableDescription + (keyToCharacter()?.capitalized ?? "�")
+	}
+}
+
+extension KeyboardShortcuts.Shortcut {
+	@available(macOS 11, *)
+	@MainActor
+	var toSwiftUI: KeyboardShortcut? {
+		guard
+			let string = keyToCharacter(),
+			let character = string.first
+		else {
+			return nil
+		}
+
+		return KeyboardShortcut(.init(character), modifiers: modifiers.toEventModifiers)
 	}
 }
 #endif

@@ -176,8 +176,8 @@ extension NSEvent {
 		modifierFlags
 			.intersection(.deviceIndependentFlagsMask)
 			// We remove `capsLock` as it shouldn't affect the modifiers.
-			// We remove `numericPad`/`function` as arrow keys trigger it, use `event.specialKeys` instead.
-			.subtracting([.capsLock, .numericPad, .function])
+			// We remove `numericPad` as arrow keys trigger it, use `event.specialKeys` instead.
+			.subtracting([.capsLock, .numericPad])
 	}
 }
 
@@ -227,7 +227,7 @@ extension NSAlert {
 		self.icon = icon
 
 		for buttonTitle in buttonTitles {
-			self.addButton(withTitle: buttonTitle)
+			addButton(withTitle: buttonTitle)
 		}
 
 		if let message {
@@ -305,8 +305,48 @@ extension NSEvent.ModifierFlags {
 	}
 }
 
-/// :nodoc:
-extension NSEvent.ModifierFlags: CustomStringConvertible {
+extension SwiftUI.EventModifiers {
+	// `.function` is deprecated, so we use the raw value.
+	fileprivate static let function_nonDeprecated = Self(rawValue: 64)
+}
+
+extension NSEvent.ModifierFlags {
+	var toEventModifiers: SwiftUI.EventModifiers {
+		var modifiers = SwiftUI.EventModifiers()
+
+		if contains(.capsLock) {
+			modifiers.insert(.capsLock)
+		}
+
+		if contains(.command) {
+			modifiers.insert(.command)
+		}
+
+		if contains(.control) {
+			modifiers.insert(.control)
+		}
+
+		if contains(.numericPad) {
+			modifiers.insert(.numericPad)
+		}
+
+		if contains(.option) {
+			modifiers.insert(.option)
+		}
+
+		if contains(.shift) {
+			modifiers.insert(.shift)
+		}
+
+		if contains(.function) {
+			modifiers.insert(.function_nonDeprecated)
+		}
+
+		return modifiers
+	}
+}
+
+extension NSEvent.ModifierFlags {
 	/**
 	The string representation of the modifier flags.
 
@@ -315,7 +355,7 @@ extension NSEvent.ModifierFlags: CustomStringConvertible {
 	//=> "⇧⌘"
 	```
 	*/
-	public var description: String {
+	var presentableDescription: String {
 		var description = ""
 
 		if contains(.control) {
@@ -446,7 +486,41 @@ extension View {
 			labelsHidden()
 				.alignmentGuide(.controlAlignment) { $0[.leading] }
 		}
-			.alignmentGuide(.leading) { $0[.controlAlignment] }
+		.alignmentGuide(.leading) { $0[.controlAlignment] }
+	}
+}
+
+
+extension Dictionary {
+	func hasKey(_ key: Key) -> Bool {
+		index(forKey: key) != nil
 	}
 }
 #endif
+
+
+extension Sequence where Element: Hashable {
+	/**
+	Convert a `Sequence` with `Hashable` elements to a `Set`.
+	*/
+	func toSet() -> Set<Element> { Set(self) }
+}
+
+
+extension Set {
+	/**
+	Convert a `Set` to an `Array`.
+	*/
+	func toArray() -> [Element] { Array(self) }
+}
+
+
+extension StringProtocol {
+	func replacingPrefix(_ prefix: String, with replacement: String) -> String {
+		guard hasPrefix(prefix) else {
+			return String(self)
+		}
+
+		return replacement + dropFirst(prefix.count)
+	}
+}
